@@ -134,23 +134,38 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start the server with error handling
-const server = app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-  console.log(`Frontend build path: ${frontendBuildPath}`);
-});
+let server;
 
-// Handle server errors
-server.on('error', (error) => {
-  console.error('Server error:', error);
-  process.exit(1);
-});
+const startServer = () => {
+  server = app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    console.log(`Frontend build path: ${frontendBuildPath}`);
+  });
+
+  // Handle server errors
+  server.on('error', (error) => {
+    console.error('Server error:', error);
+    process.exit(1);
+  });
+};
 
 // Handle process termination
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Shutting down gracefully...');
-  server.close(() => {
-    console.log('Server closed');
+const gracefulShutdown = () => {
+  console.log('Received shutdown signal. Starting graceful shutdown...');
+  
+  if (server) {
+    server.close(() => {
+      console.log('Server closed');
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
-}); 
+  }
+};
+
+// Handle different termination signals
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Start the server
+startServer(); 

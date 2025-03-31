@@ -37,5 +37,9 @@ RUN mkdir -p /app/frontend/build
 # Expose port
 EXPOSE 3000
 
-# Start the application with proper error handling
-CMD ["sh", "-c", "cd /app/backend && node src/index.js"] 
+# Use tini for proper process management
+RUN apk add --no-cache tini
+
+# Start the application with tini
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["node", "src/index.js"] 

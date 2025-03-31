@@ -13,7 +13,7 @@ COPY backend/package*.json ./
 RUN npm install
 COPY backend/ .
 
-# Production stage
+# Final stage
 FROM node:18-alpine
 WORKDIR /app
 
@@ -23,23 +23,16 @@ COPY --from=frontend-build /app/frontend/build ./frontend/build
 # Copy backend
 COPY --from=backend-build /app/backend ./backend
 
-# Install production dependencies
+# Install production dependencies for backend
 WORKDIR /app/backend
 RUN npm install --production
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=9999
-
-# Create necessary directories
-RUN mkdir -p /app/frontend/build
+ENV PORT=3000
 
 # Expose port
-EXPOSE 9999
+EXPOSE 3000
 
-# Use tini for proper process management
-RUN apk add --no-cache tini
-
-# Start the application with tini
-ENTRYPOINT ["/sbin/tini", "--"]
+# Start the application
 CMD ["node", "src/index.js"] 

@@ -1,29 +1,26 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const OpenAI = require('openai');
-const path = require('path');
+const { OpenAI } = require('openai');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 
 const app = express();
-// Use PORT from environment or default to 9999 to match Render.io's default
-const port = process.env.PORT || 9999;
+const port = process.env.PORT || 3000;
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['http://localhost:3000', 'https://your-frontend-domain.com'] 
-    : '*',
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Get the absolute path to the frontend build directory
-const frontendBuildPath = path.join(__dirname, '../../frontend/build');
-
-// Serve static files from the frontend build directory
-app.use(express.static(frontendBuildPath));
+// Serve frontend build in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../../frontend/build')));
+  
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/build', 'index.html'));
+  });
+}
 
 // Rate limiting
 const limiter = rateLimit({
@@ -32,26 +29,21 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', port: port });
-});
-
-// Chat endpoint
+// Routes
 app.post('/api/chat', async (req, res) => {
   try {
     const { question } = req.body;
     const apiKey = req.headers.authorization?.split(' ')[1];
 
     if (!apiKey) {
-      return res.status(401).json({ error: 'OpenAI API key is required' });
+      return res.status(401).json({ error: 'API key is required' });
     }
 
     if (!question) {
       return res.status(400).json({ error: 'Question is required' });
     }
 
-    // Initialize OpenAI with the API key from the request
+    // Initialize OpenAI with the key from the request
     const openai = new OpenAI({
       apiKey: apiKey
     });
@@ -60,75 +52,132 @@ app.post('/api/chat', async (req, res) => {
     try {
       await openai.models.list();
     } catch (error) {
-      console.error('API Key validation failed:', error);
-      return res.status(401).json({ error: 'Invalid OpenAI API key' });
+      if (error.response?.status === 401) {
+        return res.status(401).json({ 
+          error: 'Invalid API key',
+          message: 'The provided API key is incorrect or invalid. Please check your API key and try again.',
+          help: 'You can find your API key at https://platform.openai.com/account/api-keys'
+        });
+      }
+      if (error.response?.status === 429) {
+        return res.status(429).json({ 
+          error: 'Rate limit exceeded',
+          message: 'You have reached the rate limit for your API key. Please wait a few minutes before trying again.',
+          help: 'Consider upgrading your plan or waiting before making more requests.'
+        });
+      }
+      throw error;
     }
 
-    // Make the chat completion request
+    // Get response from OpenAI with a system prompt that makes it respond as the candidate
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: `You are a software developer candidate with 5 years of experience in full-stack development. 
-          You have expertise in:
-          - Frontend: React, Angular, Vue.js
-          - Backend: Node.js, Python, Java
-          - Databases: MongoDB, PostgreSQL, MySQL
-          - Cloud: AWS, Azure, GCP
-          - DevOps: Docker, Kubernetes, CI/CD
-          - Other: Git, Agile, Microservices
-          
-          Respond to interview questions as if you are this candidate. Be professional but conversational. 
-          Share specific examples from your experience. Keep responses concise but detailed enough to demonstrate expertise.
-          If asked about something you don't know, be honest about it and explain what you would do to learn it.`
+          content: `You are an AI representing a software engineer candidate with the following background:
+
+Professional Background:
+- AWS Certified Software Engineer with expertise in AI/ML, multi-agent systems, and database optimization
+- Currently working at an AI startup as a Software Engineer
+- Previously worked at a tech company
+- B.Tech in Information Technology from an engineering college with good academic performance
+
+Key Skills:
+- Python, C++, Linux, SQL, Django, PostgreSQL
+- LangChain, AWS, REST APIs, NLP, DSA, Git
+- Docker, LangGraph, Serverless, Shell Scripting, FastAPI
+
+Personal Background:
+- Born and brought up in a tier 3 city
+- Secured admission to a top engineering college
+- Got placed directly from college
+- Food enthusiast
+- Love playing cricket and ground games
+- Music lover
+
+Recent Achievements:
+- Developed Multi-Agent Systems using Python, FastAPI, LangGraph, and OpenAI
+- Built Lead Scoring Agent with NLP and Vector Databases
+- Created Case Study Writer with human-in-the-loop approach
+- Developed VideoSense Agent for video content retrieval
+- Built AI-powered assistant for call center agents
+- Optimized database architecture improving query performance by 60%
+- Published researcher in IET and IEEE
+- Recognized as top-performing contributor at an International Conference
+- AWS Certified Developer - Associate
+
+IMPORTANT INSTRUCTIONS:
+1. Respond as if you are the candidate described above. Never use phrases like "I can assist you with interview preparation" or "I can help you with".
+2. Use specific details from the provided background in your responses.
+3. Keep responses concise and focused on your actual experiences.
+4. If asked about something not in your background, say "I don't have experience with that specific area" rather than making up generic responses.
+5. Always maintain a professional yet personal tone.
+6. Never use placeholder text or generic descriptions.
+7. If asked about personal interests, mention your actual interests: cricket, ground games, music, and food.
+8. When discussing technical skills, focus on the specific technologies listed in your background.
+9. For achievements, always reference the actual projects and accomplishments listed above.
+10. Never mention specific company names, college names, or city names. Use generic terms like "AI startup", "tech company", "engineering college", "tier 3 city".`
         },
         {
           role: "user",
           content: question
         }
       ],
-      temperature: 0.7,
-      max_tokens: 500
+      temperature: 0.3,
+      max_tokens: 1000
     });
 
-    res.json({ answer: completion.choices[0].message.content });
+    const answer = completion.choices[0].message.content;
+    res.json({ answer });
   } catch (error) {
     console.error('Error:', error);
     
     // Handle specific OpenAI API errors
-    if (error.response) {
-      switch (error.response.status) {
-        case 401:
-          res.status(401).json({ error: 'Invalid OpenAI API key' });
-          break;
-        case 429:
-          res.status(429).json({ error: 'Rate limit exceeded. Please try again later.' });
-          break;
-        case 404:
-          res.status(404).json({ error: 'Model not found' });
-          break;
-        default:
-          res.status(400).json({ error: 'Error processing your request' });
-      }
-    } else if (error.request) {
-      res.status(503).json({ error: 'Service unavailable. Please try again later.' });
-    } else {
-      res.status(500).json({ 
-        error: 'An unexpected error occurred',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    if (error.response?.status === 401) {
+      return res.status(401).json({ 
+        error: 'Invalid API key',
+        message: 'The provided API key is incorrect or invalid. Please check your API key and try again.',
+        help: 'You can find your API key at https://platform.openai.com/account/api-keys'
       });
     }
-  }
-});
+    if (error.response?.status === 429) {
+      return res.status(429).json({ 
+        error: 'Rate limit exceeded',
+        message: 'You have reached the rate limit for your API key. Please wait a few minutes before trying again.',
+        help: 'Consider upgrading your plan or waiting before making more requests.'
+      });
+    }
+    if (error.response?.status === 404) {
+      return res.status(404).json({ 
+        error: 'Model not found',
+        message: 'The specified model is not available. Please check your configuration.',
+        help: 'Make sure you have access to the model or try using a different model.'
+      });
+    }
+    if (error.response?.status === 400) {
+      return res.status(400).json({ 
+        error: 'Invalid request',
+        message: 'The request was invalid. Please check your input and try again.',
+        help: 'Review the API documentation for valid request formats.'
+      });
+    }
 
-// Handle all other routes by serving the frontend app
-app.get('*', (req, res) => {
-  try {
-    res.sendFile(path.join(frontendBuildPath, 'index.html'));
-  } catch (error) {
-    console.error('Error serving frontend:', error);
-    res.status(500).json({ error: 'Error serving frontend application' });
+    // Handle network errors
+    if (error.code === 'ECONNREFUSED') {
+      return res.status(503).json({ 
+        error: 'Service unavailable',
+        message: 'The OpenAI service is temporarily unavailable. Please try again later.',
+        help: 'Check your internet connection or try again in a few minutes.'
+      });
+    }
+
+    // Handle other errors
+    res.status(500).json({ 
+      error: 'Unexpected error',
+      message: 'An unexpected error occurred. Please try again later.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
@@ -136,43 +185,11 @@ app.get('*', (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ 
-    error: 'An unexpected error occurred',
+    error: 'An unexpected error occurred. Please try again later.',
     details: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
 
-let server;
-
-const startServer = () => {
-  server = app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-    console.log(`Frontend build path: ${frontendBuildPath}`);
-  });
-
-  // Handle server errors
-  server.on('error', (error) => {
-    console.error('Server error:', error);
-    process.exit(1);
-  });
-};
-
-// Handle process termination
-const gracefulShutdown = () => {
-  console.log('Received shutdown signal. Starting graceful shutdown...');
-  
-  if (server) {
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  } else {
-    process.exit(0);
-  }
-};
-
-// Handle different termination signals
-process.on('SIGTERM', gracefulShutdown);
-process.on('SIGINT', gracefulShutdown);
-
-// Start the server
-startServer(); 
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+}); 

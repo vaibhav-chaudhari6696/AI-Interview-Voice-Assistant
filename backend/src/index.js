@@ -14,6 +14,7 @@ app.use(express.json());
 
 // Serve frontend build in production
 if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the frontend build directory
   app.use(express.static(path.join(__dirname, '../../frontend/build')));
   
   // Handle React routing, return all requests to React app

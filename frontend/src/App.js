@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import { FaMicrophone, FaStop, FaRobot, FaUser, FaCog } from 'react-icons/fa';
 
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:9999';
+
 function App() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -17,6 +19,7 @@ function App() {
   const utteranceRef = useRef(null);
   const [recordingIndicator, setRecordingIndicator] = useState(false);
   const [speakingIndicator, setSpeakingIndicator] = useState(false);
+  const [error, setError] = useState(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,65 +107,40 @@ function App() {
     }
   };
 
-  const handleSubmit = async (text) => {
-    if (!text.trim() || !apiKey) return;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!input.trim()) return;
 
-    const newMessage = { text, sender: 'user' };
-    setMessages(prev => [...prev, newMessage]);
-    setInput('');
     setIsLoading(true);
+    setError(null);
 
     try {
-      const response = await fetch('http://localhost:9999/api/chat', {
+      const response = await fetch(`${API_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({ question: text })
+        body: JSON.stringify({ question: input })
       });
 
-      const data = await response.json();
-      
       if (!response.ok) {
-        if (response.status === 401) {
-          setShowApiKeyModal(true);
-          setMessages(prev => [...prev, { 
-            text: `${data.message}\n\nHelp: ${data.help}`, 
-            sender: 'ai',
-            isError: true
-          }]);
-          return;
-        }
-        if (response.status === 429) {
-          setMessages(prev => [...prev, { 
-            text: `${data.message}\n\nHelp: ${data.help}`, 
-            sender: 'ai',
-            isError: true
-          }]);
-          return;
-        }
-        const errorMessage = data.message || data.error || 'An unexpected error occurred';
-        const helpText = data.help ? `\n\nHelp: ${data.help}` : '';
-        setMessages(prev => [...prev, { 
-          text: `${errorMessage}${helpText}`, 
-          sender: 'ai',
-          isError: true
-        }]);
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to get response');
       }
 
-      const aiMessage = { text: data.answer, sender: 'ai' };
-      setMessages(prev => [...prev, aiMessage]);
-      speak(data.answer);
+      const data = await response.json();
+      setMessages(prev => [...prev, 
+        { type: 'user', content: input },
+        { type: 'assistant', content: data.answer }
+      ]);
+      setInput('');
     } catch (error) {
       console.error('Error:', error);
-      const errorMessage = error.message || 'Sorry, there was an error processing your request.';
-      setMessages(prev => [...prev, { 
-        text: errorMessage, 
-        sender: 'ai',
-        isError: true
-      }]);
+      setError(error.message);
+      if (error.message.includes('API key')) {
+        setShowApiKeyModal(true);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -310,7 +288,7 @@ function App() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSubmit(input)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSubmit(e)}
               placeholder="Type your message..."
               disabled={isListening || isSpeaking}
             />
@@ -323,7 +301,7 @@ function App() {
             </button>
             <button
               className="send-button"
-              onClick={() => handleSubmit(input)}
+              onClick={(e) => handleSubmit(e)}
               disabled={!input.trim() || isListening || isSpeaking}
             >
               Send

@@ -9,8 +9,14 @@ const app = express();
 // Use PORT from environment or default to 9999 to match Render.io's default
 const port = process.env.PORT || 9999;
 
-// Middleware
-app.use(cors());
+// CORS configuration
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['http://localhost:3000', 'https://your-frontend-domain.com'] 
+    : '*',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
 // Get the absolute path to the frontend build directory

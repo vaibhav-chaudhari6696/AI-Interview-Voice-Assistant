@@ -6,10 +6,13 @@ COPY package*.json ./
 
 RUN npm install
 
-RUN npm install react-icons
-
 COPY . .
+
+RUN npm run build
+
+# Install serve to run the production build
+RUN npm install -g serve
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["serve", "-s", "build", "-l", "3000"]

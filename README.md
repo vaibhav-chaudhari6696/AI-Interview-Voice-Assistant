@@ -99,7 +99,7 @@ A unique voice-enabled AI candidate that you can interview! This bot acts as a c
 1. **Clone the Repository**
 ```bash
 git clone https://github.com/vaibhav-chaudhari6696/AI-Interview-Voice-Assistant.git
-cd AI-Interview-Voice-Assistant.git
+cd AI-Interview-Voice-Assistant
 ```
 
 2. **Set Up Environment**

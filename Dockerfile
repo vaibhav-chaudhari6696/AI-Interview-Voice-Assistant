@@ -31,8 +31,11 @@ RUN npm install --production
 ENV NODE_ENV=production
 ENV PORT=3000
 
+# Create necessary directories
+RUN mkdir -p /app/frontend/build
+
 # Expose port
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"] 
+# Start the application with proper error handling
+CMD ["sh", "-c", "cd /app/backend && node src/index.js"] 

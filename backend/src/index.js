@@ -12,8 +12,11 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Get the absolute path to the frontend build directory
+const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+
 // Serve static files from the frontend build directory
-app.use(express.static(path.join(__dirname, '../../frontend/build')));
+app.use(express.static(frontendBuildPath));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -114,9 +117,40 @@ app.post('/api/chat', async (req, res) => {
 
 // Handle all other routes by serving the frontend app
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/build', 'index.html'));
+  try {
+    res.sendFile(path.join(frontendBuildPath, 'index.html'));
+  } catch (error) {
+    console.error('Error serving frontend:', error);
+    res.status(500).json({ error: 'Error serving frontend application' });
+  }
 });
 
-app.listen(port, () => {
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ 
+    error: 'An unexpected error occurred',
+    details: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
+});
+
+// Start the server with error handling
+const server = app.listen(port, () => {
   console.log(`Server running on port ${port}`);
+  console.log(`Frontend build path: ${frontendBuildPath}`);
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('Server error:', error);
+  process.exit(1);
+});
+
+// Handle process termination
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 }); 

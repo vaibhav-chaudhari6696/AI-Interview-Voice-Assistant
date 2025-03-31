@@ -29,13 +29,13 @@ RUN npm install --production
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=9999
 
 # Create necessary directories
 RUN mkdir -p /app/frontend/build
 
 # Expose port
-EXPOSE 3000
+EXPOSE 9999
 
 # Use tini for proper process management
 RUN apk add --no-cache tini

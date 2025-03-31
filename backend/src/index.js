@@ -6,7 +6,8 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const port = process.env.PORT || 3000;
+// Use PORT from environment or default to 9999 to match Render.io's default
+const port = process.env.PORT || 9999;
 
 // Middleware
 app.use(cors());
@@ -27,7 +28,7 @@ app.use(limiter);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', port: port });
 });
 
 // Chat endpoint

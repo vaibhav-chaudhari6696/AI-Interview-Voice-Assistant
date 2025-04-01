@@ -4,12 +4,9 @@
 cd /app/backend
 PORT=$BACKEND_PORT npm start &
 
-# Wait for backend to be ready
+# Wait for backend to be ready (using sleep since we know the port)
 echo "Waiting for backend to start..."
-while ! curl -s http://localhost:$BACKEND_PORT/health > /dev/null; do
-    sleep 1
-done
-echo "Backend is ready!"
+sleep 5
 
 # Start frontend
 cd /app/frontend

@@ -67,15 +67,16 @@ voice-interview-ai/
 │   ├── src/
 │   │   └── index.js        # Express server & OpenAI integration
 │   └── package.json
-├── Dockerfile              # Main Dockerfile for Render.com deployment
-├── Dockerfile.frontend     # Frontend Docker configuration
-├── Dockerfile.backend      # Backend Docker configuration
-├── start.sh               # Script to start both services
-├── .dockerignore          # Docker ignore rules
-├── .env.example           # Example environment variables
-├── .gitignore             # Git ignore rules
-├── docker-compose.yml     # Docker compose configuration
-└── README.md             # Project documentation
+├── docker/                  # Docker configuration
+│   ├── frontend/
+│   │   └── Dockerfile      # Frontend Docker configuration
+│   └── backend/
+│       └── Dockerfile      # Backend Docker configuration
+├── .dockerignore           # Docker ignore rules
+├── .env.example            # Example environment variables
+├── .gitignore              # Git ignore rules
+├── docker-compose.yml      # Docker compose configuration
+└── README.md              # Project documentation
 ```
 
 ## 🔧 Development Setup

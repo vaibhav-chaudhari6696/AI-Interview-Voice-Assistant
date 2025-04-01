@@ -1,55 +1,38 @@
-# Build stage for frontend
-FROM node:18-alpine as frontend-builder
-
+# Build Frontend
+FROM node:18-alpine as frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm install
 RUN npm install react-icons
 COPY frontend/ .
-
-# Create a script to replace environment variables at runtime
-RUN echo '#!/bin/sh\n\
-sed -i "s|REACT_APP_API_URL=.*|REACT_APP_API_URL=$API_URL|g" /app/frontend/build/static/js/*.js\n\
-serve -s build -l 3000' > /app/frontend/start-frontend.sh && \
-chmod +x /app/frontend/start-frontend.sh
-
 RUN npm run build
 
-# Build stage for backend
-FROM node:18-alpine as backend-builder
-
+# Build Backend
+FROM node:18-alpine as backend-build
 WORKDIR /app/backend
 COPY backend/package*.json ./
 RUN npm install
 COPY backend/ .
 
-# Final stage
+# Production
 FROM node:18-alpine
-
 WORKDIR /app
 
-# Copy frontend build
-COPY --from=frontend-builder /app/frontend/build ./frontend/build
-COPY --from=frontend-builder /app/frontend/start-frontend.sh ./frontend/start-frontend.sh
-COPY --from=frontend-builder /app/frontend/package*.json ./frontend/
-
 # Copy backend
-COPY --from=backend-builder /app/backend ./backend
+COPY --from=backend-build /app/backend ./backend
 
-# Install serve for frontend
+# Copy frontend build
+COPY --from=frontend-build /app/frontend/build ./frontend/build
+
+# Install serve to serve frontend
 RUN npm install -g serve
-
-# Copy start script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
 # Expose ports
 EXPOSE 9999
 EXPOSE 3000
 
-# Environment variables
-ENV PORT=9999
-ENV NODE_ENV=production
+# Start both services using a shell script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
-# Start both services
 CMD ["/app/start.sh"] 

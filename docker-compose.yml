@@ -1,35 +1,17 @@
 version: '3.8'
 
 services:
-  frontend:
+  app:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
-    container_name: voice-interview-frontend
+      dockerfile: Dockerfile
+    container_name: voice-interview-app
     ports:
       - "3000:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    environment:
-      - REACT_APP_API_URL=http://localhost:9999
-    depends_on:
-      - backend
-    restart: unless-stopped
-
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: voice-interview-backend
-    ports:
       - "9999:9999"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
     environment:
       - PORT=9999
-      - NODE_ENV=development
+      - NODE_ENV=production
     restart: unless-stopped
 
 networks:

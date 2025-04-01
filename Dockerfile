@@ -27,8 +27,9 @@ COPY --from=frontend-build /app/frontend/build ./frontend/build
 # Install serve to serve frontend
 RUN npm install -g serve
 
-# Expose the port Render will use
+# Set environment variables for ports
 ENV PORT=10000
+ENV BACKEND_PORT=10001
 EXPOSE $PORT
 
 # Start both services using a shell script

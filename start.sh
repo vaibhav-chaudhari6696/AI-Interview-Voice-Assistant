@@ -1,8 +1,11 @@
 #!/bin/sh
 
-# Start backend
+# Start backend first
 cd /app/backend
-PORT=9999 npm start &
+PORT=$BACKEND_PORT npm start &
+
+# Wait a moment for backend to start
+sleep 2
 
 # Start frontend
 cd /app/frontend

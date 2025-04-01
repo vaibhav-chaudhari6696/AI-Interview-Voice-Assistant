@@ -2,11 +2,11 @@
 
 # Start backend
 cd /app/backend
-npm start &
+PORT=9999 npm start &
 
 # Start frontend
 cd /app/frontend
-serve -s build -l 3000 &
+PORT=$PORT serve -s build &
 
 # Wait for any process to exit
 wait 

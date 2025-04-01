@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine as builder
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -9,23 +9,13 @@ COPY frontend/package*.json ./
 # Install dependencies
 RUN npm install
 
+RUN npm install react-icons
+
 # Copy source code
 COPY frontend/ .
 
-# Build the application
-RUN npm run build
+# Expose port 3000
+EXPOSE 3000
 
-# Production stage
-FROM nginx:alpine
-
-# Copy built assets from builder stage
-COPY --from=builder /app/build /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start the application
+CMD ["npm", "start"] 

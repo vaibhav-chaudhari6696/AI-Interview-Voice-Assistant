@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: voice-interview-frontend
     ports:
-      - "3000:80"
+      - "3000:3000"
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -30,7 +30,6 @@ services:
     environment:
       - PORT=9999
       - NODE_ENV=development
-      - CORS_ORIGIN=http://localhost:3000
     restart: unless-stopped
 
 networks:

@@ -98,33 +98,63 @@ npm start
 
 ### Frontend Dockerfile
 ```dockerfile
-FROM node:18-alpine
+# Build stage
+FROM node:18-alpine as builder
+
 WORKDIR /app
+
+# Copy package files
 COPY frontend/package*.json ./
+
+# Install dependencies
 RUN npm install
-RUN npm install react-icons
+
+# Copy source code
 COPY frontend/ .
-EXPOSE 3000
-CMD ["npm", "start"]
+
+# Build the application
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copy built assets from builder stage
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
 ```
 
 ### Backend Dockerfile
 ```dockerfile
 FROM node:18-alpine
+
 WORKDIR /app
+
+# Copy backend files
 COPY backend/package*.json ./
 RUN npm install
 COPY backend/ .
+
+# Expose backend port
 EXPOSE 9999
+
+# Start backend service
 CMD ["npm", "start"]
 ```
 
 ### Docker Compose
 - Manages both frontend and backend services
-- Sets up networking between containers
-- Mounts volumes for development
-- Handles environment variables
-- Implements container restart policies
+- Frontend served through Nginx
+- Backend runs Node.js directly
+- Proper port mapping (3000:80 for frontend, 9999:9999 for backend)
+- Environment variables for service communication
 
 ## 🎯 Usage Guide
 

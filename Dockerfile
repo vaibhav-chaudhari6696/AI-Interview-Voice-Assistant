@@ -1,43 +1,38 @@
-# Build Frontend
-FROM node:18-alpine as frontend-build
-WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
-RUN npm install react-icons
-COPY frontend/ .
-RUN npm run build
-
-# Build Backend
-FROM node:18-alpine as backend-build
-WORKDIR /app/backend
-COPY backend/package*.json ./
-RUN npm install
-COPY backend/ .
-
-# Production
+# Use Node.js as base image
 FROM node:18-alpine
+
+# Set working directory
 WORKDIR /app
 
-# Install required packages
-RUN apk add --no-cache wget
+# Create directories for frontend and backend
+RUN mkdir -p /app/frontend /app/backend
 
-# Copy backend
-COPY --from=backend-build /app/backend ./backend
+# Copy package.json files
+COPY ./frontend/package*.json ./frontend/
+COPY ./backend/package*.json ./backend/
 
-# Copy frontend build
-COPY --from=frontend-build /app/frontend/build ./frontend/build
+# Install dependencies
+WORKDIR /app/frontend
+RUN npm install
+RUN npm install react-icons
 
-# Install serve to serve frontend
-RUN npm install -g serve
+WORKDIR /app/backend
+RUN npm install
 
-# Set environment variables for ports and API URL
-ENV PORT=10000
-ENV BACKEND_PORT=10001
-ENV REACT_APP_API_URL=http://localhost:10001
-EXPOSE $PORT
+# Copy application code
+WORKDIR /app
+COPY ./frontend ./frontend/
+COPY ./backend ./backend/
 
-# Start both services using a shell script
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Install supervisord to manage multiple processes
+RUN apk add --no-cache supervisor
 
-CMD ["/app/start.sh"] 
+# Configure supervisord
+RUN mkdir -p /etc/supervisor/conf.d
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+
+# Expose ports
+EXPOSE 3000 9999
+
+# Start services using supervisord
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]

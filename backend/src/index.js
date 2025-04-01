@@ -3,25 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const { OpenAI } = require('openai');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 9999;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-
-// Serve frontend build in production
-if (process.env.NODE_ENV === 'production') {
-  // Serve static files from the frontend build directory
-  app.use(express.static(path.join(__dirname, '../../frontend/build')));
-  
-  // Handle React routing, return all requests to React app
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../frontend/build', 'index.html'));
-  });
-}
 
 // Rate limiting
 const limiter = rateLimit({

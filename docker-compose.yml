@@ -1,21 +1,41 @@
 version: '3.8'
 
 services:
-  app:
+  frontend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/frontend/Dockerfile
+    container_name: voice-interview-frontend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - OPENAI_MODEL=gpt-4o-mini
     volumes:
-      - .:/app
+      - ./frontend:/app
       - /app/node_modules
-      - /app/frontend/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:9999
+    depends_on:
+      - backend
     restart: unless-stopped
 
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    container_name: voice-interview-backend
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - PORT=9999
+      - NODE_ENV=development
+    restart: unless-stopped
+
+networks:
+  default:
+    name: voice-interview-network
+    driver: bridge
+
 volumes:
-  mongodb_data: 
+  logs: 

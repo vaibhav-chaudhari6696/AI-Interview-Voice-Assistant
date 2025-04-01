@@ -15,7 +15,7 @@ services:
         fromService:
           name: voice-interview-frontend
           type: web
-          property: url
+          property: connectionString
     healthCheckPath: /health
     autoDeploy: true
 
@@ -33,6 +33,6 @@ services:
         fromService:
           name: voice-interview-backend
           type: web
-          property: url
+          property: connectionString
     healthCheckPath: /
     autoDeploy: true 

@@ -29,7 +29,43 @@ RUN apk add --no-cache supervisor
 
 # Configure supervisord
 RUN mkdir -p /etc/supervisor/conf.d
-COPY supervisord.conf /etc/supervisor/supervisord.conf
+
+# Create supervisord config file directly
+RUN echo '[supervisord]' > /etc/supervisor/supervisord.conf && \
+    echo 'nodaemon=true' >> /etc/supervisor/supervisord.conf && \
+    echo 'user=root' >> /etc/supervisor/supervisord.conf && \
+    echo 'logfile=/var/log/supervisor/supervisord.log' >> /etc/supervisor/supervisord.conf && \
+    echo 'pidfile=/var/run/supervisord.pid' >> /etc/supervisor/supervisord.conf && \
+    echo '' >> /etc/supervisor/supervisord.conf && \
+    echo '[program:frontend]' >> /etc/supervisor/supervisord.conf && \
+    echo 'command=npm start' >> /etc/supervisor/supervisord.conf && \
+    echo 'directory=/app/frontend' >> /etc/supervisor/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisor/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisor/supervisord.conf && \
+    echo 'stdout_logfile=/var/log/supervisor/frontend.log' >> /etc/supervisor/supervisord.conf && \
+    echo 'stderr_logfile=/var/log/supervisor/frontend-error.log' >> /etc/supervisor/supervisord.conf && \
+    echo 'environment=REACT_APP_API_URL="http://localhost:9999"' >> /etc/supervisor/supervisord.conf && \
+    echo '' >> /etc/supervisor/supervisord.conf && \
+    echo '[program:backend]' >> /etc/supervisor/supervisord.conf && \
+    echo 'command=npm start' >> /etc/supervisor/supervisord.conf && \
+    echo 'directory=/app/backend' >> /etc/supervisor/supervisord.conf && \
+    echo 'autostart=true' >> /etc/supervisor/supervisord.conf && \
+    echo 'autorestart=true' >> /etc/supervisor/supervisord.conf && \
+    echo 'stdout_logfile=/var/log/supervisor/backend.log' >> /etc/supervisor/supervisord.conf && \
+    echo 'stderr_logfile=/var/log/supervisor/backend-error.log' >> /etc/supervisor/supervisord.conf && \
+    echo 'environment=PORT="9999",NODE_ENV="development"' >> /etc/supervisor/supervisord.conf && \
+    echo '' >> /etc/supervisor/supervisord.conf && \
+    echo '[supervisorctl]' >> /etc/supervisor/supervisord.conf && \
+    echo 'serverurl=unix:///var/run/supervisor.sock' >> /etc/supervisor/supervisord.conf && \
+    echo '' >> /etc/supervisor/supervisord.conf && \
+    echo '[unix_http_server]' >> /etc/supervisor/supervisord.conf && \
+    echo 'file=/var/run/supervisor.sock' >> /etc/supervisor/supervisord.conf && \
+    echo '' >> /etc/supervisor/supervisord.conf && \
+    echo '[rpcinterface:supervisor]' >> /etc/supervisor/supervisord.conf && \
+    echo 'supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface' >> /etc/supervisor/supervisord.conf
+
+# Create log directory for supervisor
+RUN mkdir -p /var/log/supervisor
 
 # Expose ports
 EXPOSE 3000 9999

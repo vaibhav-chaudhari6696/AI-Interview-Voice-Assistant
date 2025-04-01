@@ -4,7 +4,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: docker/frontend/Dockerfile
+      dockerfile: Dockerfile.frontend
     container_name: voice-interview-frontend
     ports:
       - "3000:3000"
@@ -20,7 +20,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: docker/backend/Dockerfile
+      dockerfile: Dockerfile.backend
     container_name: voice-interview-backend
     ports:
       - "9999:9999"

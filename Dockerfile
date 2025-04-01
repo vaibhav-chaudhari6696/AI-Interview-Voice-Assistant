@@ -27,9 +27,10 @@ COPY --from=frontend-build /app/frontend/build ./frontend/build
 # Install serve to serve frontend
 RUN npm install -g serve
 
-# Set environment variables for ports
+# Set environment variables for ports and API URL
 ENV PORT=10000
 ENV BACKEND_PORT=10001
+ENV REACT_APP_API_URL=http://localhost:10001
 EXPOSE $PORT
 
 # Start both services using a shell script

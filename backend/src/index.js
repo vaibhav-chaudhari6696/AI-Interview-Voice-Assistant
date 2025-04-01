@@ -18,6 +18,11 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 // Routes
 app.post('/api/chat', async (req, res) => {
   try {

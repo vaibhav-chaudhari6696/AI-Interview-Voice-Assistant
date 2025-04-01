@@ -105,36 +105,63 @@ function App() {
   };
 
   const handleSubmit = async (text) => {
-    if (!text.trim()) return;
-    
+    if (!text.trim() || !apiKey) return;
+
+    const newMessage = { text, sender: 'user' };
+    setMessages(prev => [...prev, newMessage]);
+    setInput('');
     setIsLoading(true);
-    setMessages(prev => [...prev, { text, sender: 'user', isError: false }]);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/chat`, {
+      const response = await fetch('http://localhost:9999/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`
         },
-        body: JSON.stringify({ question: text }),
-        credentials: 'include'
+        body: JSON.stringify({ question: text })
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch response');
+        if (response.status === 401) {
+          setShowApiKeyModal(true);
+          setMessages(prev => [...prev, { 
+            text: `${data.message}\n\nHelp: ${data.help}`, 
+            sender: 'ai',
+            isError: true
+          }]);
+          return;
+        }
+        if (response.status === 429) {
+          setMessages(prev => [...prev, { 
+            text: `${data.message}\n\nHelp: ${data.help}`, 
+            sender: 'ai',
+            isError: true
+          }]);
+          return;
+        }
+        const errorMessage = data.message || data.error || 'An unexpected error occurred';
+        const helpText = data.help ? `\n\nHelp: ${data.help}` : '';
+        setMessages(prev => [...prev, { 
+          text: `${errorMessage}${helpText}`, 
+          sender: 'ai',
+          isError: true
+        }]);
+        return;
       }
 
-      const data = await response.json();
-      setMessages(prev => [...prev, { text: data.response, sender: 'ai', isError: false }]);
-      speak(data.response);
+      const aiMessage = { text: data.answer, sender: 'ai' };
+      setMessages(prev => [...prev, aiMessage]);
+      speak(data.answer);
     } catch (error) {
       console.error('Error:', error);
+      const errorMessage = error.message || 'Sorry, there was an error processing your request.';
       setMessages(prev => [...prev, { 
-        text: error.message || 'Failed to get response. Please try again.', 
-        sender: 'ai', 
-        isError: true 
+        text: errorMessage, 
+        sender: 'ai',
+        isError: true
       }]);
     } finally {
       setIsLoading(false);

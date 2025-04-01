@@ -7,22 +7,9 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const port = process.env.PORT || 9999;
 
-// CORS configuration
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-};
-
 // Middleware
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
 
 // Rate limiting
 const limiter = rateLimit({

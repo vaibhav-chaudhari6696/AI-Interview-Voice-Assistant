@@ -11,13 +11,6 @@ services:
         value: 9999
       - key: NODE_ENV
         value: production
-      - key: CORS_ORIGIN
-        fromService:
-          name: voice-interview-frontend
-          type: web
-          property: connectionString
-    healthCheckPath: /health
-    autoDeploy: true
 
   # Frontend service
   - type: web
@@ -30,9 +23,4 @@ services:
       - key: PORT
         value: 3000
       - key: REACT_APP_API_URL
-        fromService:
-          name: voice-interview-backend
-          type: web
-          property: connectionString
-    healthCheckPath: /
-    autoDeploy: true 
+        value: https://voice-interview-backend.onrender.com  # This will be the backend URL 

@@ -18,6 +18,9 @@ COPY backend/ .
 FROM node:18-alpine
 WORKDIR /app
 
+# Install required packages
+RUN apk add --no-cache wget
+
 # Copy backend
 COPY --from=backend-build /app/backend ./backend
 

@@ -26,11 +26,11 @@ WORKDIR /app/frontend
 COPY frontend/ .
 
 # Copy entrypoint script
-COPY entrypoint.sh /app/
+COPY ./entrypoint.sh /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Expose ports for both services
 EXPOSE 3000 5000
 
 # Set the entrypoint script
-ENTRYPOINT ["/app/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]

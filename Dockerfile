@@ -30,13 +30,10 @@ COPY entrypoint.sh /app/
 RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
-ENV BACKEND_PORT=10000
-ENV FRONTEND_PORT=3000
-ENV REACT_APP_API_URL=http://localhost:10000
 ENV NODE_ENV=production
 
-# Expose both ports
-EXPOSE 10000 3000
+# Expose the port that Render will use
+EXPOSE $PORT
 
 # Set the entrypoint script
 ENTRYPOINT ["sh", "/app/entrypoint.sh"]

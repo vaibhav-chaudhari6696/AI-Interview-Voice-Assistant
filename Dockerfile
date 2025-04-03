@@ -31,9 +31,10 @@ RUN chmod +x /app/entrypoint.sh
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=3000
 
-# Expose the port that Render will use
-EXPOSE $PORT
+# Expose the frontend port
+EXPOSE 3000
 
 # Set the entrypoint script
 ENTRYPOINT ["sh", "/app/entrypoint.sh"]

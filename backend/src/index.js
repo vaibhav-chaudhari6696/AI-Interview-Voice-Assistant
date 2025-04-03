@@ -5,7 +5,7 @@ const { OpenAI } = require('openai');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
-const port = process.env.PORT || 10001;
+const port = process.env.PORT || 9999;
 
 // Middleware
 app.use(cors());

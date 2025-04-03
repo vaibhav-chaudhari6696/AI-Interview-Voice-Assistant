@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Get the port from Render's environment variable
+RENDER_PORT=${PORT:-10000}
+
+# Get the port from Render's environment variable
 RENDER_PORT=3000
 
 # Start the frontend service

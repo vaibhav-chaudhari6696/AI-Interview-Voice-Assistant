@@ -32,6 +32,7 @@ RUN chmod +x /app/entrypoint.sh
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV HOST=0.0.0.0
 
 # Expose the frontend port
 EXPOSE 3000

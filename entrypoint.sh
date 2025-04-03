@@ -1,19 +1,15 @@
 #!/bin/bash
 
-# Get the port from Render's environment variable (this will be 10000)
-RENDER_PORT=${PORT:-10000}
+# Get the port from Render's environment variable
+RENDER_PORT=${PORT:-3000}
 
-# Build the frontend
-cd /app/frontend
-npm run build
-
-# Start the backend service (will use PORT-1 from backend's environment)
+# Start the backend service
 cd /app/backend
-npm start &
+PORT=$((RENDER_PORT - 1)) npm start &
 
-# Serve the frontend build on Render's port (10000)
+# Start the frontend service
 cd /app/frontend
-npx serve -s build -l $RENDER_PORT &
+REACT_APP_API_URL=http://localhost:9999 PORT=$RENDER_PORT npm start &
 
 # Wait for all background processes to complete
 wait 
